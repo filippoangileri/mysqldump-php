@@ -50,7 +50,7 @@ From version 2.0, connections to database are made using the standard DSN, docum
 Using [Composer](https://getcomposer.org/):
 
 ```
-$ composer require ifsnop/mysqldump-php
+$ composer require filippoangileri/mysqldump-php
 
 ```
 
