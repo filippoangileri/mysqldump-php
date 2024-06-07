@@ -192,6 +192,7 @@ $dumpSettingsDefault = array(
     'no-create-db' => false,
     'no-create-info' => false,
     'lock-tables' => true,
+    'replace' => false,
     'routines' => false,
     'single-transaction' => true,
     'skip-triggers' => false,
@@ -273,6 +274,8 @@ $this->_dumpSettings = self::array_replace_recursive($dumpSettingsDefault, $dump
 - **no-data**
   - https://dev.mysql.com/doc/refman/5.1/en/mysqldump.html#option_mysqldump_no-data
   - Do not dump data for these tables (array of table names), support regexps, `true` to ignore all tables
+- **replace**
+  - Perform the dump using REPLACE INTO statements instead of INSERT. Note that the IGNORE option is silently ignored.
 - **routines**
   - https://dev.mysql.com/doc/refman/5.1/en/mysqldump.html#option_mysqldump_routines
 - **single-transaction**
