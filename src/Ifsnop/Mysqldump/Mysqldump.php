@@ -141,6 +141,7 @@ class Mysqldump
         'no-create-db' => false,
         'no-create-info' => false,
         'lock-tables' => true,
+        'replace' => false,
         'routines' => false,
         'single-transaction' => true,
         'skip-triggers' => false,
@@ -1174,6 +1175,13 @@ class Mysqldump
 
         $ignore = $this->dumpSettings['insert-ignore'] ? '  IGNORE' : '';
 
+	if($this->dumpSettings['replace']){
+            $insert = 'REPLACE';
+            $ignore = '';
+        }else{
+            $insert = 'INSERT';
+        }
+	    
         $count = 0;
         foreach ($resultSet as $row) {
             $count++;
@@ -1181,13 +1189,13 @@ class Mysqldump
             if ($onlyOnce || !$this->dumpSettings['extended-insert']) {
                 if ($this->dumpSettings['complete-insert']) {
                     $lineSize += $this->compressManager->write(
-                        "INSERT$ignore INTO `$tableName` (".
+                        "$insert$ignore INTO `$tableName` (".
                         implode(", ", $colNames).
                         ") VALUES (".implode(",", $vals).")"
                     );
                 } else {
                     $lineSize += $this->compressManager->write(
-                        "INSERT$ignore INTO `$tableName` VALUES (".implode(",", $vals).")"
+                        "$insert$ignore INTO `$tableName` VALUES (".implode(",", $vals).")"
                     );
                 }
                 $onlyOnce = false;
