@@ -142,6 +142,7 @@ class Mysqldump
         'no-create-info' => false,
         'lock-tables' => true,
         'replace' => false,
+        'replace_buste_postalizzazione' => false,
         'routines' => false,
         'single-transaction' => true,
         'skip-triggers' => false,
@@ -829,7 +830,7 @@ class Mysqldump
                     );
                 }
                 $this->compressManager->write(
-                    $this->typeAdapter->create_table($r)
+                    $this->typeAdapter->create_table($r, $tableName)
                 );
                 break;
             }
@@ -1175,11 +1176,18 @@ class Mysqldump
 
         $ignore = $this->dumpSettings['insert-ignore'] ? '  IGNORE' : '';
 
-	if($this->dumpSettings['replace']){
+	    if($this->dumpSettings['replace']){
             $insert = 'REPLACE';
             $ignore = '';
         }else{
             $insert = 'INSERT';
+        }
+        
+        
+        if($this->dumpSettings['replace_buste_postalizzazione'] != false && $tableName == "Buste_postalizzazione"){
+            $tableName_stmt = "Buste_".$this->dumpSettings['replace_buste_postalizzazione'];
+        }else{
+            $tableName_stmt = $tableName;
         }
 	    
         $count = 0;
@@ -1189,13 +1197,13 @@ class Mysqldump
             if ($onlyOnce || !$this->dumpSettings['extended-insert']) {
                 if ($this->dumpSettings['complete-insert']) {
                     $lineSize += $this->compressManager->write(
-                        "$insert$ignore INTO `$tableName` (".
+                        "$insert$ignore INTO `$tableName_stmt` (".
                         implode(", ", $colNames).
                         ") VALUES (".implode(",", $vals).")"
                     );
                 } else {
                     $lineSize += $this->compressManager->write(
-                        "$insert$ignore INTO `$tableName` VALUES (".implode(",", $vals).")"
+                        "$insert$ignore INTO `$tableName_stmt` VALUES (".implode(",", $vals).")"
                     );
                 }
                 $onlyOnce = false;
@@ -1241,16 +1249,22 @@ class Mysqldump
         if ($this->dumpSettings['lock-tables'] && !$this->dumpSettings['single-transaction']) {
             $this->typeAdapter->lock_table($tableName);
         }
+        
+        if($this->dumpSettings['replace_buste_postalizzazione'] != false && $tableName == "Buste_postalizzazione"){
+            $tableName_stmt = "Buste_".$this->dumpSettings['replace_buste_postalizzazione'];
+        }else{
+            $tableName_stmt = $tableName;
+        }
 
         if ($this->dumpSettings['add-locks']) {
             $this->compressManager->write(
-                $this->typeAdapter->start_add_lock_table($tableName)
+                $this->typeAdapter->start_add_lock_table($tableName_stmt)
             );
         }
 
         if ($this->dumpSettings['disable-keys']) {
             $this->compressManager->write(
-                $this->typeAdapter->start_add_disable_keys($tableName)
+                $this->typeAdapter->start_add_disable_keys($tableName_stmt)
             );
         }
 
@@ -1274,9 +1288,16 @@ class Mysqldump
      */
     public function endListValues($tableName, $count = 0)
     {
+        
+        if($this->dumpSettings['replace_buste_postalizzazione'] != false && $tableName == "Buste_postalizzazione"){
+            $tableName_stmt = "Buste_".$this->dumpSettings['replace_buste_postalizzazione'];
+        }else{
+            $tableName_stmt = $tableName;
+        }
+        
         if ($this->dumpSettings['disable-keys']) {
             $this->compressManager->write(
-                $this->typeAdapter->end_add_disable_keys($tableName)
+                $this->typeAdapter->end_add_disable_keys($tableName_stmt)
             );
         }
 
@@ -1923,7 +1944,7 @@ class TypeAdapterMysql extends TypeAdapterFactory
         return "SHOW CREATE EVENT `$eventName`";
     }
 
-    public function create_table($row)
+    public function create_table($row, $tableName)
     {
         if (!isset($row['Create Table'])) {
             throw new Exception("Error getting table code, unknown output");
@@ -1934,6 +1955,11 @@ class TypeAdapterMysql extends TypeAdapterFactory
             $match = "/AUTO_INCREMENT=[0-9]+/s";
             $replace = "";
             $createTable = preg_replace($match, $replace, $createTable);
+        }
+        
+        if($this->dumpSettings['replace_buste_postalizzazione'] != false && $tableName == "Buste_postalizzazione"){
+            $tableName_stmt = "Buste_".$this->dumpSettings['replace_buste_postalizzazione'];
+            $createTable = preg_replace('/^CREATE TABLE `Buste_postalizzazione`/', 'CREATE TABLE `'.$tableName_stmt.'`', $createTable);
         }
 
 		if ($this->dumpSettings['if-not-exists'] ) {
